@@ -5,7 +5,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
     var width
     var height
     var lastX,lastY
-    var duration = 0
+    var firstTouch = true
+    var touchTime = 0
     var display_duration = 0
 
     var resize = function() {
@@ -33,8 +34,9 @@ window.addEventListener('DOMContentLoaded', (event) => {
     }
 
 
-    function update(progress) {
+    function update(progress,timestamp) {
         let time = Math.round((progress/1000) * 1000)/1000      //有効数字3桁 四捨五入 [ms]→[s]
+        timestamp = Math.round((timestamp/1000) * 1000)/1000      //有効数字3桁 四捨五入 [ms]→[s]
         console.log("X: " + state.x + " Y: " + state.y)
         console.log("lastX: " + lastX + " lastY: " + lastY)
         // console.log("vx: " + state.touchStatus.movementX + " vy: " + state.touchStatus.movementY)
@@ -45,17 +47,21 @@ window.addEventListener('DOMContentLoaded', (event) => {
         lastX = state.x;
         lastY = state.y;
 
-        if(state.touchStatus.isTouch) {
-            duration += time
-            display_duration = Math.round(duration * 100)/100
+        // ストップウォッチ START
+        if(state.touchStatus.isTouch && firstTouch) {
+            touchTime = timestamp
+            firstTouch = false
         }
-        else    duration = 0
-        console.log("duration: " + Math.round(duration * 100)/100 + "[s]")
+        if(!state.touchStatus.isTouch && !firstTouch) {
+            display_duration = Math.round((timestamp - touchTime) * 100)/100
+            firstTouch = true
+        }
+        // ストップウォッチ END
     }
 
     function draw() {
         ctx.fillStyle = background_color		// 背景色を設定
-        ctx.fillRect(0,0,width,height)			// 塗りつぶし
+        ctx.fillRect(0,0,width*2,height*2)			// 塗りつぶし
 
         ctx.fillStyle = "rgb(241, 243, 247)"
         ctx.textAlign = "center"
@@ -65,9 +71,9 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
     function loop(timestamp) {
         var progress = timestamp - lastRender
-        // console.log("Time[s]: " + Math.round((timestamp/1000) * 1000)/1000)
+        console.log("Time[s]: " + Math.round((timestamp/1000) * 1000)/1000)
 
-        update(progress)
+        update(progress,timestamp)
         draw()
 
         lastRender = timestamp
